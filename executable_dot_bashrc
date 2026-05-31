@@ -1,0 +1,118 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+################################
+####  function definiton   #####
+################################
+add_to_path() {
+    local new_path="$1"
+    
+    if [ -z "$new_path" ]; then
+        echo "用法: add_to_path <路径>" >&2
+        return 1
+    fi
+    
+    # 手动展开开头的 ~（处理用户加引号的情况）
+    case "$new_path" in
+        "~"|"~/"*)
+            new_path="$HOME${new_path#\~}"
+            ;;
+        "~"*)
+            # ~user/xxx 这种形式，用 eval 展开（注意：仅对可信输入）
+            new_path=$(eval echo "$new_path")
+            ;;
+    esac
+    
+    if [ ! -d "$new_path" ]; then
+        echo "警告: 目录不存在: $new_path" >&2
+        return 1
+    fi
+    
+    new_path="$(cd "$new_path" && pwd)"
+    
+    case ":$PATH:" in
+        *":$new_path:"*)
+            echo "已添加 ${new_path}"
+            return 0 ;;
+        *) export PATH="$new_path:$PATH" ;;
+    esac
+}
+
+history_update() {
+    # command out found error
+    if [ $? -ne 127 ]; then
+        history -a
+    else
+        history -d $((HISTCMD - 1))
+    fi
+}
+
+# If not running interactively, don't do anything
+case $- in
+*i*) ;;
+*) return ;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL="ignoreboth:erasedups"
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+# Save multi-line commands as one command
+shopt -s cmdhist
+
+# auto cd directory
+shopt -s autocd
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=100000
+HISTFILESIZE=200000
+
+# ignore some command
+HISTIGNORE="l[sl]:[bf]g:exit:pwd:clear:vim:cd:cd -:history"
+
+# "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories
+shopt -s globstar
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+# correct minor spelling errors in cd
+shopt -s cdspell
+#include dotfiles in wildcard expansion, and match case-insensitively
+shopt -s dotglob
+shopt -s nocaseglob
+
+if [ -f "$HOME/.env.sh" ]; then
+    . "$HOME/.env.sh"
+fi
+
+if [ -f "$HOME/.bash_aliases" ]; then
+    . "$HOME/.bash_aliases"
+fi
+
+eval "$(starship init bash)"
+eval "$(zoxide init bash)"
+eval "$(fzf --bash)"
+# eval "$(mise activate bash)"
+
+
+export PROMPT_COMMAND="history_update;$PROMPT_COMMAND"
+
+export LANG=en_US.UTF-8
+export https_proxy=http://127.0.0.1:10808
+export http_proxy=http://127.0.0.1:10808
+export EDITOR=nvim
+add_to_path "~/.local/bin"
+# set -o vi
+
+
+# ghostty + tmux 配置异常fix
+if ! type __ghostty_hook &>/dev/null; then
+  PROMPT_COMMAND="${PROMPT_COMMAND//__ghostty_hook;/}"
+  PROMPT_COMMAND="${PROMPT_COMMAND//__ghostty_hook/}"
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

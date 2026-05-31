@@ -1,0 +1,35 @@
+# 默认emacs模式
+set editing-mode vi
+# \e[1 q 闪烁方块光标  \1\e[5 q 闪烁竖线光标
+# \1 xxx \2 避免将转义 \e[1 光标也计算进宽度
+# 默认为 set vi-cmd-mode-string (cmd) set vi-ins-mode-string (ins) 
+set vi-cmd-mode-string "\1\e[1 q\2"
+set vi-ins-mode-string "\1\e[5 q\2"
+# 必须先设置mode-string  
+set show-mode-in-prompt on
+
+set horizontal-scroll-mode off
+set bell-style none
+set meta-flag on
+set input-meta on
+set convert-meta off
+set output-meta on
+set revert-all-at-newline on
+set menu-complete-display-prefix on
+set completion-ignore-case on
+set show-all-if-ambiguous on
+set keyseq-timeout 50
+# tab 匹配项向前向后
+Tab:menu-complete
+"\e[Z":menu-complete-backward
+
+#v 进入 vim 编辑器 默认 edit-and-execute-command
+# 有 bug 执行 bind -v | grep -E "vi-cmd-mode-string|vi-ins-mode-string" 显示为空 但是光标闪烁正常
+$if mode=vi
+    set keymap vi-command
+    "v": vi-insertion-mode
+    set keymap vi-insert
+    "\C-a": beginning-of-line
+    "\C-e": end-of-line
+    "\C-w": backward-kill-word
+$endif
